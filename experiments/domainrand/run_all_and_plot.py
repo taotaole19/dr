@@ -26,7 +26,7 @@ PROJECT_ROOT = str(_THIS_FILE.parent.parent.parent)   # …/MPTS-main/DR
 # Visual style
 # ──────────────────────────────────────────────────────────────────────────────
 METHOD_STYLES: dict[str, dict] = {
-    "tnpd": {"color": "#E63946", "label": "TNPD (Ours)", "zorder": 10, "lw": 2.0},
+    "icrpm": {"color": "#E63946", "label": "icrpm (Ours)", "zorder": 10, "lw": 2.0},
     "mpts": {"color": "#F4A300", "label": "MPTS",        "zorder": 9,  "lw": 1.8},
     "erm":  {"color": "#4CAF50", "label": "ERM",         "zorder": 5,  "lw": 1.4},
     "drm":  {"color": "#2196F3", "label": "DRM",         "zorder": 5,  "lw": 1.4},
@@ -36,12 +36,12 @@ METHOD_STYLES: dict[str, dict] = {
     "ohtm": {"color": "#263238", "label": "OHTM",        "zorder": 5,  "lw": 1.4},
 }
 
-# ALL_METHODS  = ["mpts", "erm", "drm", "gdrm", "ohtm", "tnpd"]
-ALL_METHODS  = ["tnpd"]
+# ALL_METHODS  = ["mpts", "erm", "drm", "gdrm", "ohtm", "icrpm"]
+ALL_METHODS  = ["icrpm"]
 
 # ALL_METHODS  = ["vae_pdts"]
 
-CORR_METHODS = ["tnpd", "mpts"]
+CORR_METHODS = ["icrpm", "mpts"]
 
 METRIC_KEYS = {
     "cvar09": "eval/cvar10_rewards",   # worst 10 % ≡ CVaR_{0.9}
@@ -236,7 +236,7 @@ def train_one(env_key: str, method: str, seed: int, L2 :bool, n:int,
               runs_root: str, window_size: int, sampling_method=None, gamma=0.9) -> str:
     """Train and return the run directory path."""
     # ── use absolute paths so nothing depends on cwd ──────────────────────
-    if 'tnpd' in method or 'pdts' in method:
+    if 'icrpm' in method or 'pdts' in method:
         run_dir  = os.path.abspath(os.path.join(runs_root, f"{env_key}_{method}_seed{seed}_l2{L2}_repeat{n}_window{window_size}_sp{sampling_method}_gamma{gamma}"))
     elif 'mpts' in method:
         run_dir  = os.path.abspath(os.path.join(runs_root, f"{env_key}_{method}_seed{seed}_l2{L2}_repeat{n}_window{window_size}_sp{sampling_method}_gamma{gamma}"))
@@ -315,7 +315,7 @@ def load_merged(runs_root: str, env_key: str, L2:bool, n :int,
     for method in methods:
         seed_dfs: list[pd.DataFrame] = []
         for seed in seeds:
-            if 'tnpd' in method or 'pdts' in method:
+            if 'icrpm' in method or 'pdts' in method:
                 csv_path = os.path.join(runs_root,
                                     f"{env_key}_{method}_seed{seed}_l2{L2}_repeat{n}_window{window_size}_sp{sampling_method}_gamma{gamma}", CSV_LOG)
             elif 'mpts' in method:
@@ -518,7 +518,7 @@ def _diagnose_csvs(runs_root: str, env_keys: list[str], L2 : bool, n : int,
     for env_key in env_keys:
         for method in methods:
             for seed in seeds:
-                if 'tnpd' in method or 'pdts' in method:
+                if 'icrpm' in method or 'pdts' in method:
                     path = os.path.join(runs_root,
                                         f"{env_key}_{method}_seed{seed}_l2{L2}_repeat{n}_window{window_size}_sp{sampling_method}_gamma{gamma}", CSV_LOG)
                 elif 'mpts' in method:
@@ -609,7 +609,7 @@ if __name__ == "__main__":
                           "experiments/). Auto-detected if not set.")
     cli.add_argument("--out_dir",   default="plots",
                      help="Output directory for PDF figures")
-    cli.add_argument("--seeds",     default="9",
+    cli.add_argument("--seeds",     default="20",
                      help="Comma-separated seeds, e.g. 123,456,789")
     cli.add_argument("--envs",      default="lunar",
                      help="Comma-separated env keys (lunar,ergo)")
@@ -623,7 +623,7 @@ if __name__ == "__main__":
     cli.add_argument("--n",          default=6, type=int, help="重复跑某个种子几次")
     cli.add_argument("--window_size",          default=3, type=int, help="时间窗口长度")
     cli.add_argument("--sampling_method",          default="mean", help="采样方法")
-    cli.add_argument("--gamma",          default=0.7, help="衰减因子")
+    cli.add_argument("--gamma",          default=0.9, help="衰减因子")
     args = cli.parse_args()
 
     seeds   = [int(s) for s in args.seeds.split(",")]
