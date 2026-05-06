@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import pdb
 from torch.distributions import Normal
 
-def build_mlp_tnpd(dim_in, dim_hid, dim_out, depth):
+def build_mlp_icrpm(dim_in, dim_hid, dim_out, depth):
     modules = [nn.Linear(dim_in, dim_hid), nn.ReLU(True)]
     for _ in range(depth-2):
         modules.append(nn.Linear(dim_hid, dim_hid))
@@ -13,9 +13,9 @@ def build_mlp_tnpd(dim_in, dim_hid, dim_out, depth):
     return nn.Sequential(*modules)
 
 
-class Decoder_me_tnpd(nn.Module):
+class Decoder_me_icrpm(nn.Module):
     def __init__(self, x_dim, z_dim, h_dim, y_dim):
-        super(Decoder_me_tnpd, self).__init__()
+        super(Decoder_me_icrpm, self).__init__()
 
         self.x_dim = x_dim
         self.z_dim = z_dim
