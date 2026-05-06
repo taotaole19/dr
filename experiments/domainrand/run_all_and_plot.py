@@ -1,34 +1,3 @@
-"""
-run_all_and_plot.py
-===================
-Two responsibilities:
-
-1. TRAINING  — calls the project's existing main() logic for every
-               (env, method, seed) combination, redirecting wandb.log()
-               to a local CSV file so no cloud account is needed.
-
-2. PLOTTING  — reads those CSVs and produces one PDF per metric per
-               environment, plus one combined multi-panel figure.
-
-Output layout (under --out_dir, default "plots/"):
-  fig1_cvar09_<env>.pdf   CVaR0.9  – all 8 methods
-  fig2_cvar07_<env>.pdf   CVaR0.7  – all 8 methods
-  fig3_cvar05_<env>.pdf   CVaR0.5  – all 8 methods
-  fig4_avg_<env>.pdf      Average  – all 8 methods
-  fig5_corr_<env>.pdf     Correlation – tnpd vs mpts
-  combined.pdf            All metrics × both envs in one figure
-
-Usage
------
-# Full training + plotting (3 seeds × 8 methods × 2 envs = 48 runs):
-python run_all_and_plot.py
-
-# Plot only from previously generated CSVs:
-python run_all_and_plot.py --plot_only
-
-# Custom seeds / envs / methods:
-python run_all_and_plot.py --seeds 1,2,3 --envs lunar --methods erm,drm,tnpd
-"""
 
 from __future__ import annotations
 import os, sys, argparse as _argparse, copy, random, logging
@@ -644,7 +613,7 @@ if __name__ == "__main__":
                           "experiments/). Auto-detected if not set.")
     cli.add_argument("--out_dir",   default="plots",
                      help="Output directory for PDF figures")
-    cli.add_argument("--seeds",     default="20",
+    cli.add_argument("--seeds",     default="9",
                      help="Comma-separated seeds, e.g. 123,456,789")
     cli.add_argument("--envs",      default="lunar",
                      help="Comma-separated env keys (lunar,ergo)")
@@ -656,9 +625,9 @@ if __name__ == "__main__":
                      help="Output resolution in DPI")
     cli.add_argument("--L2",        default=False, action="store_true", help="是否使用l2正则")
     cli.add_argument("--n",          default=6, type=int, help="重复跑某个种子几次")
-    cli.add_argument("--window_size",          default=2, type=int, help="时间窗口长度")
+    cli.add_argument("--window_size",          default=3, type=int, help="时间窗口长度")
     cli.add_argument("--sampling_method",          default="mean", help="采样方法")
-    cli.add_argument("--gamma",          default=0.9, help="衰减因子")
+    cli.add_argument("--gamma",          default=0.7, help="衰减因子")
     args = cli.parse_args()
 
     seeds   = [int(s) for s in args.seeds.split(",")]
