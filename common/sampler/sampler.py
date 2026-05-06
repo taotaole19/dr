@@ -67,16 +67,16 @@ class Diverse_MP_BatchSampler(MP_BatchSampler):
         return tasks, diversified_score, combine_local_diverse_score, combine_local_acquisition_score
 
 
-class MP_BatchSampler_tnpd(object):
+class MP_BatchSampler_icrpm(object):
     def __init__(self, args, risk_learner_trainer, gamma_0, gamma_1):
-        self.risklearner_trainer = risk_learner_trainer  # RiskLearnerTrainer_tnpd instance
+        self.risklearner_trainer = risk_learner_trainer  # RiskLearnerTrainer_icrpm instance
         self.args = args
         self.gamma_0 = gamma_0
         self.gamma_1 = gamma_1
         self.current_epoch = 0
 
     def get_acquisition_score(self, tasks):
-        # RiskLearnerTrainer_tnpd.acquisition_function returns
+        # RiskLearnerTrainer_icrpm.acquisition_function returns
         # (acquisition_score, output_mu, output_sigma)  — same signature as before.
         # When history is empty it returns random scores, so no special case needed here.
         acquisition_score, output_mu, output_sigma = \
@@ -120,7 +120,7 @@ class MP_BatchSampler_tnpd(object):
 
     def train(self, tasks, y, i=None):
         """
-        RiskLearnerTrainer_tnpd.train() returns either:
+        RiskLearnerTrainer_icrpm.train() returns either:
           - a plain scalar  loss.item()          (cold-start, first step)
           - a tuple         (total_loss.item(), 0, 0)   (normal steps)
 
@@ -139,9 +139,9 @@ class MP_BatchSampler_tnpd(object):
         return loss, recon_loss, kl_loss
 
 
-class Diverse_MP_BatchSampler_tnpd(MP_BatchSampler_tnpd):
+class Diverse_MP_BatchSampler_icrpm(MP_BatchSampler_icrpm):
     """
-    Diverse 版本的 tnpd 采样器，与 Diverse_MP_BatchSampler 完全对称。
+    Diverse 版本的 icrpm 采样器，与 Diverse_MP_BatchSampler 完全对称。
     RiskLearnerTrainer_Markov 需以 diversity_type='msd' 初始化。
     """
     def __init__(self, args, risk_learner_trainer, gamma_0, gamma_1, gamma_2):
