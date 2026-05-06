@@ -35,18 +35,14 @@ METHOD_STYLES: dict[str, dict] = {
     "tdps": {"color": "#FF9800", "label": "TDPS",        "zorder": 5,  "lw": 1.4},
     "ohtm": {"color": "#263238", "label": "OHTM",        "zorder": 5,  "lw": 1.4},
 }
-# ALL_METHODS  = ["tnpd", "mpts", "erm", "drm", "gdrm", "dats", "tdps", "ohtm"]
+
 # ALL_METHODS  = ["mpts", "erm", "drm", "gdrm", "ohtm", "tnpd"]
 ALL_METHODS  = ["tnpd"]
 
 # ALL_METHODS  = ["vae_pdts"]
 
-# ALL_METHODS = ["vae_pdts"]
-
-# ALL_METHODS = ["ohtm"]
 CORR_METHODS = ["tnpd", "mpts"]
 
-# wandb metric keys written by SVPGSimulatorAgent.select_action()
 METRIC_KEYS = {
     "cvar09": "eval/cvar10_rewards",   # worst 10 % ≡ CVaR_{0.9}
     "cvar07": "eval/cvar30_rewards",
