@@ -9,7 +9,7 @@ from common.svpg.svpg import SVPG
 
 from common.utils.rollout_evaluation import evaluate_policy, check_solved, cvar_evaluate_policy, gdro_evaluate_policy
 from common.agents.ddpg.replay_buffer import ReplayBuffer
-from common.sampler.sampler import (MP_BatchSampler, Diverse_MP_BatchSampler, MP_BatchSampler_tnpd, Diverse_MP_BatchSampler_tnpd)
+from common.sampler.sampler import (MP_BatchSampler, Diverse_MP_BatchSampler, MP_BatchSampler_icrpm, Diverse_MP_BatchSampler_icrpm)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 logger = logging.getLogger(__name__)
@@ -18,8 +18,8 @@ from scipy.stats import spearmanr
 
 def _uses_sampler(algo: str) -> bool:
     """True only for the two algorithms that own a learned sampler."""
-    # return algo in ('mpts', 'tnpd')
-    return algo in ('mpts', 'tnpd') or 'diverse' in algo   # ← 加上 diverse 变体
+    # return algo in ('mpts', 'icrpm')
+    return algo in ('mpts', 'icrpm') or 'diverse' in algo   # ← 加上 diverse 变体
 
 
 def _uses_agent_policy_scores(algo: str) -> bool:
@@ -121,16 +121,16 @@ class SVPGSimulatorAgent(object):
         self.agent_timesteps = 0
         self.agent_timesteps_since_eval = 0
         
-        from mpmodel.risklearner import RiskLearner, RiskLearner_tnpd, RiskLearner_np
+        from mpmodel.risklearner import RiskLearner, RiskLearner_icrpm, RiskLearner_np
         from mpmodel.new_trainer_risklearner import RiskLearnerTrainer, RiskLearnerTrainer_Markov
         self.args = args
 
-        # ── sampler: only created for mpts / tnpd ────────────────────────
+        # ── sampler: only created for mpts / icrpm ────────────────────────
         self.sampler = None   # sentinel; checked via _uses_sampler() throughout
         # pdts新增:
         # ── pdts → ps_diverse_mpts 别名（与第一版保持一致）─────────────────
         if self.args.algo == 'pdts':
-            self.args.algo = 'ps_diverse_tnpd'
+            self.args.algo = 'ps_diverse_icrpm'
 
         if self.args.algo == 'vae_pdts':
             self.args.algo = 'ps_diverse_mpts'
@@ -162,8 +162,8 @@ class SVPGSimulatorAgent(object):
                                     args.sampling_gamma_0,
                                     args.sampling_gamma_1,)
                                     
-        elif self.args.algo == 'tnpd' or 'tnpd' in self.args.algo:
-            self.risklearner = RiskLearner_tnpd(
+        elif self.args.algo == 'icrpm' or 'icrpm' in self.args.algo:
+            self.risklearner = RiskLearner_icrpm(
                 x_dim=self.nparams, y_dim=1, h_dim=10,
                 d_model=64, emb_depth=4, nhead=4, dim_feedforward=128,
                 dropout=0.0, num_layers=2
@@ -182,14 +182,14 @@ class SVPGSimulatorAgent(object):
                 posterior_sampling=getattr(args, 'posterior_sampling', False),
             )
             if diversity_type is not None:
-                self.sampler = Diverse_MP_BatchSampler_tnpd(
+                self.sampler = Diverse_MP_BatchSampler_icrpm(
                     args, self.risklearner_trainer,
                     args.sampling_gamma_0,
                     args.sampling_gamma_1,
                     args.sampling_gamma_2,
                 )
             else:
-                self.sampler = MP_BatchSampler_tnpd(
+                self.sampler = MP_BatchSampler_icrpm(
                     args, self.risklearner_trainer,
                     args.sampling_gamma_0, args.sampling_gamma_1,
                 )
@@ -331,7 +331,7 @@ class SVPGSimulatorAgent(object):
 
             if _uses_sampler(algo):
                 if self.diversity_type is not None:
-                    # diverse 路径（mpts diverse / tnpd diverse 共用）
+                    # diverse 路径（mpts diverse / icrpm diverse 共用）
                     (simulation_instances,
                      diversified_score,
                      combine_local_diverse_score,
@@ -340,7 +340,7 @@ class SVPGSimulatorAgent(object):
                         multiplier=self.args.sampler_multiplier,
                     )
                 else:
-                    # 普通路径（mpts / tnpd 非 diverse）
+                    # 普通路径（mpts / icrpm 非 diverse）
                     simulation_instances = self.sampler.sample_tasks(
                         shape=_shape_3d,
                         multiplier=self.args.sampler_multiplier,
@@ -418,7 +418,7 @@ class SVPGSimulatorAgent(object):
                 self.agent_timesteps_since_eval += len(randomized_trajectory[i])
 
         # ── initialise sampler-related variables used later ───────────────
-        # These are only meaningful for mpts/tnpd but are referenced in the
+        # These are only meaningful for mpts/icrpm but are referenced in the
         # info dict and wandb.log below, so we define safe defaults here.
         acquisition_score    = None
         acquisition_mean     = None
@@ -440,7 +440,7 @@ class SVPGSimulatorAgent(object):
                     simulation_instances.reshape(self.svpg.svpg_rollout_length * self.nagents, self.svpg.nparams)
                 ).to(device)
 
-                # ── sampler training: only for mpts / tnpd ────────────────
+                # ── sampler training: only for mpts / icrpm ────────────────
                 if _uses_sampler(self.args.algo):
                     acquisition_score, acquisition_mean, acquisition_std = \
                         self.sampler.get_acquisition_score(simulation_instances_flatten)
@@ -513,7 +513,7 @@ class SVPGSimulatorAgent(object):
                 full_random_settings = np.random.uniform(0.0, 1.0, size=(self.nagents, self.nparams))
                 self.randomized_eval_env.randomize(randomized_values=full_random_settings)
             
-                # ── sampler acquisition at eval: only for mpts / tnpd ─────
+                # ── sampler acquisition at eval: only for mpts / icrpm ─────
                 if _uses_sampler(self.args.algo):
                     full_random_settings_tensor = torch.FloatTensor(full_random_settings).to(device)
                     eval_acquisition_score, _, _ = self.sampler.get_acquisition_score(
