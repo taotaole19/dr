@@ -139,7 +139,7 @@ class RiskLearnerTrainer():
 class RiskLearnerTrainer_Markov:
     def __init__(self, device, risklearner, optimizer,
                  window_size=3,
-                 gamma=0.7,
+                 gamma=0.9,
                  l2=False,
                  diversity_type=None,      # "msd" 或 None
                  posterior_sampling=False):
