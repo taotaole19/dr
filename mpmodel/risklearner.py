@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import pdb
 from torch.distributions import Normal
-from mpmodel.backbone_risklearner import build_mlp_tnpd, Decoder_me_tnpd, Encoder, MuSigmaEncoder, Decoder
+from mpmodel.backbone_risklearner import build_mlp_icrpm, Decoder_me_icrpm, Encoder, MuSigmaEncoder, Decoder
 
 # Define RiskLearner for the current task distribution and the current backbone parameters...
 class RiskLearner(nn.Module):
@@ -69,7 +69,7 @@ class RiskLearner(nn.Module):
             return p_y_pred, z_variational_posterior
 
 
-class RiskLearner_tnpd(nn.Module):
+class RiskLearner_icrpm(nn.Module):
     """
     Implements risklearner for functions of arbitrary dimensions.
     x_dim : int Dimension of x values.
@@ -80,7 +80,7 @@ class RiskLearner_tnpd(nn.Module):
     """
 
     def __init__(self, x_dim, y_dim, h_dim, d_model, emb_depth, nhead, dim_feedforward, dropout, num_layers):
-        super(RiskLearner_tnpd, self).__init__()
+        super(RiskLearner_icrpm, self).__init__()
         self.x_dim = x_dim
         self.y_dim = y_dim
         # self.r_dim = r_dim
@@ -89,10 +89,10 @@ class RiskLearner_tnpd(nn.Module):
         self.d_model = d_model
         self.emb_depth = emb_depth
 
-        self.xz_to_y_me = Decoder_me_tnpd(x_dim, d_model, h_dim, y_dim)
+        self.xz_to_y_me = Decoder_me_icrpm(x_dim, d_model, h_dim, y_dim)
 
         # token embedding
-        self.embedder = build_mlp_tnpd(x_dim + y_dim, d_model, d_model, emb_depth)
+        self.embedder = build_mlp_icrpm(x_dim + y_dim, d_model, d_model, emb_depth)
         # transformer encoder
         encoder_layer = nn.TransformerEncoderLayer(d_model, nhead, dim_feedforward, dropout, batch_first=True)
         self.encoder = nn.TransformerEncoder(encoder_layer, num_layers)
@@ -158,10 +158,10 @@ class RiskLearner_np(nn.Module):
     """
     Neural Process 版 RiskLearner（MLP encoder + 均值聚合 + MLP decoder）。
 
-    接口与 RiskLearner_tnpd 完全一致：
+    接口与 RiskLearner_icrpm 完全一致：
         forward(last_risk_x, last_risk_y, risk_x, risk_y, output_type)
 
-    训练方式仍然是 tnpd 风格——由外部 trainer 显式提供 context (last_risk_x,
+    训练方式仍然是 icrpm 风格——由外部 trainer 显式提供 context (last_risk_x,
     last_risk_y) 和 target (risk_x, [risk_y])，模型在每次 forward 内
     重新对 context 进行编码并聚合，再解码 target。
     """
@@ -178,7 +178,7 @@ class RiskLearner_np(nn.Module):
         # nhead / dim_feedforward / dropout / num_layers 仅为接口兼容，未使用
 
         # NP Encoder：(x_i, y_i) -> r_i
-        self.xy_to_r = build_mlp_tnpd(
+        self.xy_to_r = build_mlp_icrpm(
             dim_in=x_dim + y_dim,
             dim_hid=d_model,
             dim_out=d_model,
@@ -186,7 +186,7 @@ class RiskLearner_np(nn.Module):
         )
 
         # NP Decoder：(x_target, r) -> Normal(mu, sigma)
-        self.xz_to_y_me = Decoder_me_tnpd(x_dim, d_model, h_dim, y_dim)
+        self.xz_to_y_me = Decoder_me_icrpm(x_dim, d_model, h_dim, y_dim)
 
     # ─────────────────────────────────────────────
     def aggregate(self, r_i):
