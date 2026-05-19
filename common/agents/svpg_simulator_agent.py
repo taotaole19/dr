@@ -581,20 +581,6 @@ class SVPGSimulatorAgent(object):
                 'kl_loss':      kl_loss,
             }
 
-            # ── sampler-only fields added only when meaningful ─────────────
-            if _uses_sampler(self.args.algo) and acquisition_score is not None:
-                info.update({
-                    'acquisition_mean': acquisition_mean.mean().item(),
-                    'acquisition_std':  acquisition_std.mean().item(),
-                    # 'return_corr': np.corrcoef(
-                    #     acquisition_score.squeeze().cpu().detach().numpy(),
-                    #     randomized_returns_flatten.squeeze().cpu().detach().numpy(),
-                    # )[0, 1],
-                    'return_corr': spearmanr(
-                            acquisition_score.squeeze().cpu().detach().numpy(),
-                            randomized_returns_flatten.squeeze().cpu().detach().numpy(),
-                        ).correlation,
-                })
 
             # ── CVaR slices (always logged) ───────────────────────────────
             cvar50 = np.sort(avg_agent_randomized_eval_rewards)[:int(len(avg_agent_randomized_eval_rewards) * 0.50)]
@@ -611,11 +597,6 @@ class SVPGSimulatorAgent(object):
                 'eval/cvar10_rewards':      np.mean(cvar10),
                 'eval/cvar5_rewards':       np.mean(cvar5),
                 'train/svpg_timesteps':     self.svpg_timesteps,
-                # 'train/sampled_mean':       simulation_instances_flatten.mean().item(),
-                # 'train/sampled_0.25_ratio': (1.0 * (simulation_instances_flatten <= 0.25)).mean().item(),
-                # 'train_sampler/sampler_loss': sampler_loss,
-                # 'train_sampler/recon_loss':   recon_loss,
-                # 'train_sampler/kl_loss':      kl_loss,
                 'step': self.agent_timesteps,
             }
 
@@ -623,22 +604,6 @@ class SVPGSimulatorAgent(object):
             if _uses_sampler(self.args.algo) and acquisition_score is not None:
                 acq_np  = acquisition_score.squeeze().cpu().detach().numpy()
                 ret_np  = randomized_returns_flatten.squeeze().cpu().detach().numpy()
-                # wandb_log['train/return_corr'] = np.corrcoef(acq_np, -ret_np)[0, 1]
-                wandb_log['train/return_corr'] = spearmanr(acq_np, -ret_np).correlation
-                wandb_log['train/acq_std'] = np.std(acq_np)
-                wandb_log['train/ret_std'] = np.std(ret_np)
-                wandb_log['train/min_acq'] = acq_np.min()
-                wandb_log['train/max_acq'] = acq_np.max()
-                wandb_log['train/min_ret'] = ret_np.min()
-                wandb_log['train/max_ret'] = ret_np.max()
-                if eval_acquisition_scores:
-                    wandb_log['eval/sampler_return_corr_pcc'] = np.corrcoef(
-                        np.array(eval_acquisition_scores),
-                        -np.array(avg_agent_randomized_eval_rewards),
-                    )[0, 1]
-                    wandb_log['eval/sampler_return_corr'] = spearmanr(np.array(eval_acquisition_scores),  
-                        -np.array(avg_agent_randomized_eval_rewards),).correlation
-                    
 
             wandb.log(wandb_log)
 
