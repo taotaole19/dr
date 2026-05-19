@@ -14,7 +14,6 @@ from common.sampler.sampler import (MP_BatchSampler, Diverse_MP_BatchSampler, MP
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 logger = logging.getLogger(__name__)
 import wandb
-from scipy.stats import spearmanr
 
 def _uses_sampler(algo: str) -> bool:
     """True only for the two algorithms that own a learned sampler."""
